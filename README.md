@@ -4,7 +4,7 @@
 | [**Windows-specific information**](#windows-specific-information)
 
 A minimal, professional template demonstrating how to configure [Bazel](https://bazel.build) to 
-build, run and debug Kotlin code (using the IntelliJ IDEA IDE with the official
+build, run and debug Kotlin code (using the [IntelliJ IDEA](https://www.jetbrains.com/idea/) IDE with the official
 [Bazel plugin](https://plugins.jetbrains.com/plugin/22977-bazel)).
 
 ## Project Structure
@@ -93,10 +93,16 @@ Running Bazel on Windows requires at the time of writing a few workarounds:
   - It is known that on Windows runfiles are not properly resolved and this error is thrown 
   `LAUNCHER ERROR: Rlocation failed on _main/external/rules_kotlin++rules_kotlin_extensions+com_github_jetbrains_kotlin_git/lib/annotations-13.0.jar, path doesn't exist in MANIFEST file`
 
+## GitHub CI/CD
+This repository contains a GitHub Actions `workflow` that builds the source code on Windows, Linux, 
+and macOS.
+It should provide a good starting point for CI/CD pipelines utilizing Bazel with Kotlin.
+The workflow is not complete and must be extended to include testing and deployment steps 
+that make sense for your project.
+
 ## References
 - [Bazel Documentation](https://bazel.build/docs)
 - [Bazelisk](https://github.com/bazelbuild/bazelisk)
-- [rules_kotlin Documentation](https://bazelbuild.github.io/rules_kotlin/)
 - [Bzlmod Documentation](https://bazel.build/external/module)
 - [Chocolatey](https://chocolatey.org/)
 

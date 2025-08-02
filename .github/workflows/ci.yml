@@ -72,22 +72,6 @@ jobs:
 #      - name: Run tests
 #        run: bazel test //...
 
-      - name: Upload native binaries (if any)
-        uses: actions/upload-artifact@v4
-        if: runner.os != 'Windows'
-        with:
-          name: bazel-binaries-${{ matrix.platform }}-${{ matrix.arch }}
-          path: |
-            bazel-bin/**/!(*.runfiles_manifest|*.sh)
-            !bazel-bin/**/*.jar
-
-      - name: Upload native binaries (Windows)
-        uses: actions/upload-artifact@v4
-        if: runner.os == 'Windows'
-        with:
-          name: bazel-binaries-${{ matrix.platform }}-${{ matrix.arch }}
-          path: bazel-bin/**/*.exe
-
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
