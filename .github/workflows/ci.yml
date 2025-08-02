@@ -72,41 +72,24 @@ jobs:
 #      - name: Run tests
 #        run: bazel test //...
 
-      - name: Package artifacts (Linux/macOS)
+      - name: Upload native binaries (if any)
+        uses: actions/upload-artifact@v4
         if: runner.os != 'Windows'
-        run: |
-          mkdir -p artifacts/${{ matrix.platform }}-${{ matrix.arch }}
-          
-          # Copy built binaries/jars to artifacts directory
-          find bazel-bin -name "*.jar" -exec cp {} artifacts/${{ matrix.platform }}-${{ matrix.arch }}/ \; 2>/dev/null || true
-          find bazel-bin -type f -executable ! -name "*.runfiles_manifest" ! -name "*.sh" -exec cp {} artifacts/${{ matrix.platform }}-${{ matrix.arch }}/ \; 2>/dev/null || true
-          
-          # Create a manifest file
-          echo "Platform: ${{ matrix.platform }}-${{ matrix.arch }}" > artifacts/${{ matrix.platform }}-${{ matrix.arch }}/BUILD_INFO.txt
-          echo "Built at: $(date)" >> artifacts/${{ matrix.platform }}-${{ matrix.arch }}/BUILD_INFO.txt
-          echo "Commit: ${{ github.sha }}" >> artifacts/${{ matrix.platform }}-${{ matrix.arch }}/BUILD_INFO.txt
-          echo "Runner: ${{ matrix.os }}" >> artifacts/${{ matrix.platform }}-${{ matrix.arch }}/BUILD_INFO.txt
+        with:
+          name: bazel-binaries-${{ matrix.platform }}-${{ matrix.arch }}
+          path: |
+            bazel-bin/**/!(*.runfiles_manifest|*.sh)
+            !bazel-bin/**/*.jar
 
-      - name: Package artifacts (Windows)
+      - name: Upload native binaries (Windows)
+        uses: actions/upload-artifact@v4
         if: runner.os == 'Windows'
-        shell: powershell
-        run: |
-          New-Item -ItemType Directory -Force -Path "artifacts/${{ matrix.platform }}-${{ matrix.arch }}"
-          
-          # Copy built binaries/jars to artifacts directory
-          Get-ChildItem -Path "bazel-bin" -Recurse -Include "*.jar", "*.exe" | Copy-Item -Destination "artifacts/${{ matrix.platform }}-${{ matrix.arch }}/" -ErrorAction SilentlyContinue
-          
-          # Create a manifest file
-          @"
-          Platform: ${{ matrix.platform }}-${{ matrix.arch }}
-          Built at: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
-          Commit: ${{ github.sha }}
-          Runner: ${{ matrix.os }}
-            "@ | Out-File -FilePath "artifacts/${{ matrix.platform }}-${{ matrix.arch }}/BUILD_INFO.txt" -Encoding UTF8
+        with:
+          name: bazel-binaries-${{ matrix.platform }}-${{ matrix.arch }}
+          path: bazel-bin/**/*.exe
 
-      - name: Upload artifacts
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.platform }}-${{ matrix.arch }}
-          path: artifacts/${{ matrix.platform }}-${{ matrix.arch }}/
-          retention-days: 30
+          name: bazel-build-${{ matrix.platform }}-${{ matrix.arch }}
+          path: bazel-bin/**/*.jar
