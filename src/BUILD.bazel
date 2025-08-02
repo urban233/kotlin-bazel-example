@@ -1,0 +1,25 @@
+load("@rules_java//java:defs.bzl", "java_binary")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+java_library(
+    name = "main_lib",
+    srcs = glob(["main/java/org/example/*.java"], allow_empty = False),
+    deps = [":utils_lib"],
+    visibility = ["//visibility:public"],
+)
+
+# Create a Java binary wrapper instead of kt_jvm_binary, this is necessary for Windows compatibility
+# without this wrapper debugging in IntelliJ IDEA would not work.
+java_binary(
+    # Google style guide: For Java *_binary and *_test rules, use "Upper CamelCase".
+    name = "Main",
+    main_class = "org.example.Main",
+    runtime_deps = [":main_lib", ":utils_lib"],
+    visibility = ["//visibility:public"],
+)
+
+kt_jvm_library(
+    name = "utils_lib",
+    srcs = glob(["main/kotlin/org/example/*.kt"]),
+    visibility = ["//visibility:public"],
+)
