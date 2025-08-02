@@ -1,0 +1,112 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+#  pull_request:
+#    branches: [ main ]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            arch: amd64
+          - os: ubuntu-latest
+            platform: linux
+            arch: arm64
+            # Use ARM64 runner if available in your GitHub plan
+            # os: ubuntu-latest-arm64
+          - os: macos-latest
+            platform: darwin
+            arch: amd64
+          - os: macos-14  # Apple Silicon runner
+            platform: darwin
+            arch: arm64
+          - os: windows-latest
+            platform: windows
+            arch: amd64
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'  # Adjust to your Java version
+          distribution: 'temurin'
+          architecture: ${{ matrix.arch == 'arm64' && 'aarch64' || 'x64' }}
+
+      - name: Setup Bazel
+        uses: bazel-contrib/setup-bazel@0.8.1
+        with:
+          bazelisk-cache: true
+          disk-cache: ${{ github.workflow }}
+          repository-cache: true
+
+      - name: Configure Bazel (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          cat >> .bazelrc.local << EOF
+          # Enable persistent workers for better performance
+          build --worker_sandboxing
+          
+          # Platform-specific optimizations
+          build --local_cpu_resources=HOST_CPUS*0.75
+          EOF
+
+      - name: Configure Bazel (Windows)
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: |
+          echo build --local_cpu_resources=HOST_CPUS*0.75 >> .bazelrc.local
+
+      - name: Build project
+        run: bazel build //src:Main
+
+#      - name: Run tests
+#        run: bazel test //...
+
+      - name: Package artifacts (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          mkdir -p artifacts/${{ matrix.platform }}-${{ matrix.arch }}
+          
+          # Copy built binaries/jars to artifacts directory
+          find bazel-bin -name "*.jar" -exec cp {} artifacts/${{ matrix.platform }}-${{ matrix.arch }}/ \; 2>/dev/null || true
+          find bazel-bin -type f -executable ! -name "*.runfiles_manifest" ! -name "*.sh" -exec cp {} artifacts/${{ matrix.platform }}-${{ matrix.arch }}/ \; 2>/dev/null || true
+          
+          # Create a manifest file
+          echo "Platform: ${{ matrix.platform }}-${{ matrix.arch }}" > artifacts/${{ matrix.platform }}-${{ matrix.arch }}/BUILD_INFO.txt
+          echo "Built at: $(date)" >> artifacts/${{ matrix.platform }}-${{ matrix.arch }}/BUILD_INFO.txt
+          echo "Commit: ${{ github.sha }}" >> artifacts/${{ matrix.platform }}-${{ matrix.arch }}/BUILD_INFO.txt
+          echo "Runner: ${{ matrix.os }}" >> artifacts/${{ matrix.platform }}-${{ matrix.arch }}/BUILD_INFO.txt
+
+      - name: Package artifacts (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force -Path "artifacts/${{ matrix.platform }}-${{ matrix.arch }}"
+          
+          # Copy built binaries/jars to artifacts directory
+          Get-ChildItem -Path "bazel-bin" -Recurse -Include "*.jar", "*.exe" | Copy-Item -Destination "artifacts/${{ matrix.platform }}-${{ matrix.arch }}/" -ErrorAction SilentlyContinue
+          
+          # Create a manifest file
+          @"
+          Platform: ${{ matrix.platform }}-${{ matrix.arch }}
+          Built at: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
+          Commit: ${{ github.sha }}
+          Runner: ${{ matrix.os }}
+            "@ | Out-File -FilePath "artifacts/${{ matrix.platform }}-${{ matrix.arch }}/BUILD_INFO.txt" -Encoding UTF8
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.platform }}-${{ matrix.arch }}
+          path: artifacts/${{ matrix.platform }}-${{ matrix.arch }}/
+          retention-days: 30
