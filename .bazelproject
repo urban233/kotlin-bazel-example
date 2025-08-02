@@ -1,3 +1,7 @@
+# Copyright (c) 2025, Martin Urban
+# Licensed under the BSD 3-Clause License (https://opensource.org/license/bsd-3-clause)
+# This file may not be copied, modified, or distributed except according to those terms.
+# ======================================================================================
 # This project view file may be overwritten by the Bazel plugin.
 # To use it as default, place it in the Bazel module or workspace root directory.
 # For more options, see https://github.com/JetBrains/hirschgarten/blob/main/commons/src/main/kotlin/org/jetbrains/bazel/projectview/README.md

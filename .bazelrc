@@ -1,9 +1,11 @@
+# Copyright (c) 2025, Martin Urban
+# Licensed under the BSD 3-Clause License (https://opensource.org/license/bsd-3-clause)
+# This file may not be copied, modified, or distributed except according to those terms.
+# ======================================================================================
 common --enable_platform_specific_config
 
 # Build Settings
 build --define=ij_product=intellij-2025.2
-#build --java_language_version=17 --java_runtime_version=17
-#build --tool_java_language_version=17 --tool_java_runtime_version=17
 
 common --java_language_version=17
 common --java_runtime_version=remotejdk_21

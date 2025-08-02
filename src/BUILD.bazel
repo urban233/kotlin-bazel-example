@@ -1,3 +1,7 @@
+# Copyright (c) 2025, Martin Urban
+# Licensed under the BSD 3-Clause License (https://opensource.org/license/bsd-3-clause)
+# This file may not be copied, modified, or distributed except according to those terms.
+# ======================================================================================
 load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
